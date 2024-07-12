@@ -8,31 +8,40 @@ services:
       - '80:80' # Public HTTP Port
       - '443:443' # Public HTTPS Port
       - '81:81' # Admin Web Port
-      # Add any other Stream port you want to expose
-      # - '21:21' # FTP
     environment:
-      # Mysql/Maria connection parameters:
+      TZ: "Asia/Bangkok"
       DB_MYSQL_HOST: "db"
       DB_MYSQL_PORT: 3306
       DB_MYSQL_USER: "npm"
-      DB_MYSQL_PASSWORD: "npm"
+      DB_MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       DB_MYSQL_NAME: "npm"
-      # Uncomment this if IPv6 is not enabled on your host
-      # DISABLE_IPV6: 'true'
+      DISABLE_IPV6: 'true'
+      X_FRAME_OPTIONS: "sameorigin"
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - npm-data:/data
+      - lets-data:/etc/letsencrypt
     depends_on:
       - db
-
+    healthcheck:
+      test: ["CMD", "/usr/bin/check-health"]
+      interval: 10s
+      timeout: 3s
   db:
     image: 'jc21/mariadb-aria:latest'
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: 'npm'
+      TZ: "Asia/Bangkok"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: 'npm'
       MYSQL_USER: 'npm'
-      MYSQL_PASSWORD: 'npm'
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MARIADB_AUTO_UPGRADE: '1'
     volumes:
-      - ./mysql:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+networks:
+  default:
+    name: nginx-proxy-manager
+volumes:
+  npm-data:
+  lets-data:
+  mysql-data:
